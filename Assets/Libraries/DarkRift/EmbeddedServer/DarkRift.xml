@@ -1,0 +1,913 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>DarkRift</name>
+    </assembly>
+    <members>
+        <member name="T:DarkRift.DarkRiftServer">
+            <summary>
+            	The main class, accepts connections and holds connection services.
+            </summary>
+        </member>
+        <member name="F:DarkRift.DarkRiftServer.CONNECTION_LIMIT">
+            <summary>
+            	The maximum number of concurrent connections this server is licensed for.
+            </summary>
+        </member>
+        <member name="F:DarkRift.DarkRiftServer.listener">
+            <summary>
+            	The main listener socket for TCP mode.
+            </summary>
+        </member>
+        <member name="F:DarkRift.DarkRiftServer.settings">
+            <summary>
+            	The config reader for the main settings.cnf file (Read only).
+            </summary>
+        </member>
+        <member name="F:DarkRift.DarkRiftServer.running">
+            <summary>
+                Is the server currently running? (Stops people bootstrapping multiple times)
+            </summary>
+        </member>
+        <member name="F:DarkRift.DarkRiftServer.connections">
+            <summary>
+            	A list of ConnectionServices for each connection to this server.
+            </summary>
+            <remarks>
+            	Dont modify the list directly, use RemoveConnection(cs)!!!
+            </remarks>
+        </member>
+        <member name="F:DarkRift.DarkRiftServer.logData">
+            <summary>
+                Should passing data be logged to output?
+            </summary>
+        </member>
+        <member name="F:DarkRift.DarkRiftServer.manualDataProcessor">
+            <summary>
+                The manual data processor to use if the threadpool is not to be used.
+            </summary>
+        </member>
+        <member name="M:DarkRift.DarkRiftServer.Bootstrap(DarkRift.Mode,System.Action{System.String},System.Action{System.String},System.Action{System.String},System.Action{System.String},DarkRift.IManualDataProcessor,System.Type[],System.Int32)">
+            <summary>
+                Start a server with settings in settings.cnf!
+            </summary>
+            <param name="mode">The mode to start the sever in.</param>
+            <param name="onLog">Method to output log messages.</param>
+            <param name="onWarning">Method to output warning messages.</param>
+            <param name="onError">Method to output error messages.</param>
+            <param name="onFatal">Method to output fatal messages.</param>
+            <param name="manualDataProcessor">The IManualDataProcessor to hand dispatch control to instead of the default threadpool</param>
+            <param name="forceLoadPlugins">A list of plugins that will be forced to load.</param>
+        </member>
+        <member name="M:DarkRift.DarkRiftServer.Bootstrap(DarkRift.Mode,System.Int32,System.UInt16,System.Boolean,System.Action{System.String},System.Action{System.String},System.Action{System.String},System.Action{System.String},DarkRift.IManualDataProcessor,System.Type[])">
+            <summary>
+                Start a server!
+            </summary>
+            <param name="mode">The mode to start the server in.</param>
+            <param name="port">The port to listen on.</param>
+            <param name="maxConnections">The maximum number of connections to allow.</param>
+            <param name="logData">Should data passing through be logged?</param>
+            <param name="onLog">Method to output log messages.</param>
+            <param name="onWarning">Method to output warning messages.</param>
+            <param name="onError">Method to output error messages.</param>
+            <param name="onFatal">Method to output fatal messages.</param>
+            <param name="manualDataProcessor">The IManualDataProcessor to hand dispatch control to instead of the default threadpool</param>
+            /// <param name="forceLoadPlugins">A list of plugins that will be forced to load.</param>
+        </member>
+        <member name="M:DarkRift.DarkRiftServer.FinishBootstrapping(DarkRift.IManualDataProcessor,System.Type[])">
+            <summary>
+                The second half of the bootstrap process, start the threads and listeners etc.
+            </summary>
+            <param name="manualDataProcessor"></param>
+            <param name="forceLoadPlugins">Plugins to be loaded wheveter mode.</param>
+        </member>
+        <member name="M:DarkRift.DarkRiftServer.GetConnectionServiceByID(System.UInt16)">
+            <summary>
+            	Gets the connection service for the specified client.
+            </summary>
+            <returns>The connection service for the client.</returns>
+            <remarks>Runs in O(n) time, I'll make it faster one day...</remarks>
+            <param name="id">The client's ID.</param>
+        </member>
+        <member name="M:DarkRift.DarkRiftServer.GetAllConnections">
+            <summary>
+            	Gets a list of all connections to this server.
+            </summary>
+            <returns>The all connections.</returns>
+        </member>
+        <member name="M:DarkRift.DarkRiftServer.GetConnectionLimit">
+            <summary>
+            	Gets the maximum number of connections allowed.
+            </summary>
+            <returns>The connection limit.</returns>
+        </member>
+        <member name="M:DarkRift.DarkRiftServer.GetNumberOfConnections">
+            <summary>
+            	Gets the number of connections to this server.
+            </summary>
+            <returns>The number of connections.</returns>
+        </member>
+        <member name="M:DarkRift.DarkRiftServer.RemoveConnection(DarkRift.ConnectionService)">
+            <summary>
+            	Removes the connection from the list.
+            </summary>
+            <param name="cs">The ConnectionService.</param>
+        </member>
+        <member name="M:DarkRift.DarkRiftServer.Close(System.Boolean)">
+            <summary>
+            	Safely shutdown the server.
+            </summary>
+        </member>
+        <member name="E:DarkRift.DarkRiftServer.onServerClose">
+            <summary>
+            	Occurs when the server is closing.
+            </summary>
+            <remarks>
+            	The connection services will still be open at this point if you need them.
+            </remarks>
+        </member>
+        <member name="P:DarkRift.DarkRiftServer.database">
+            <summary>
+            	The database.
+            </summary>
+        </member>
+        <member name="P:DarkRift.DarkRiftServer.mode">
+            <summary>
+                The mode the server is running in.
+            </summary>
+        </member>
+        <member name="P:DarkRift.DarkRiftServer.port">
+            <summary>
+                The port the server is listening on.
+            </summary>
+        </member>
+        <member name="P:DarkRift.DarkRiftServer.maxConnections">
+            <summary>
+                The connection limit the user has specified.
+            </summary>
+        </member>
+        <member name="T:DarkRift.IDAllocation.IDAllocator">
+            <summary>
+            	This allocates IDs to the connections as they arrive.
+            </summary>
+        </member>
+        <member name="M:DarkRift.IDAllocation.IDAllocator.GetAvailableID">
+            <summary>
+            	Get an ID not allocated to another client and allocate it to this one.
+            </summary>
+            <returns>A new ID.</returns>
+        </member>
+        <member name="T:DarkRift.ConnectionService">
+            <summary>
+            	This class handles the connection to a client and processes all the data it sends as well as the initial handshaking etc.
+            </summary>
+        </member>
+        <member name="M:DarkRift.ConnectionService.Handshake">
+            <summary>
+            	Performs the initial (accepting) handshake with the client.
+            </summary>
+        </member>
+        <member name="M:DarkRift.ConnectionService.RejectConnection(System.Net.Sockets.Socket)">
+            <summary>
+                Sends a reject message to the given socket and closes it.
+            </summary>
+            <param name="soc"></param>
+        </member>
+        <member name="M:DarkRift.ConnectionService.CallOnPostPlayerConnect">
+            <summary>
+                Calls the onPlayerPost connect event.
+            </summary>
+        </member>
+        <member name="M:DarkRift.ConnectionService.StartWaitingForBytes(System.Int32,System.Action{System.Byte[]})">
+            <summary>
+                Waits for the specified amount of bytes to be received.
+            </summary>
+            <param name="length">The number of bytes to receive.</param>
+            <param name="callback">The callback </param>
+        </member>
+        <member name="M:DarkRift.ConnectionService.StartWaitingForChunk(DarkRift.StateObject)">
+            <summary>
+                Waits for the next chunk of data from this socket.
+            </summary>
+            <param name="state">The StateObject for the receive operation.</param>
+        </member>
+        <member name="M:DarkRift.ConnectionService.ChunkReadCallback(System.IAsyncResult)">
+            <summary>
+                Called when a chunk has been read.
+            </summary>
+            <param name="result"></param>
+        </member>
+        <member name="M:DarkRift.ConnectionService.ReadHeaderCallback(System.Byte[])">
+            <summary>
+                Callback to read the header bytes from socket
+            </summary>
+            <param name="result"></param>
+        </member>
+        <member name="M:DarkRift.ConnectionService.ReadBodyCallback(System.Byte[])">
+            <summary>
+                Callback to read the body from the socket.
+            </summary>
+            <param name="result"></param>
+        </member>
+        <member name="M:DarkRift.ConnectionService.ProcessDataItem(System.Byte[])">
+            <summary>
+            	This is the threaded routine that directs messages from the client to the necessary services.
+            </summary>
+        </member>
+        <member name="M:DarkRift.ConnectionService.InvokeDataEvents(DarkRift.NetworkMessage@)">
+            <summary>
+                Invokes onData and onDataDecoded.
+            </summary>
+            <param name="message"></param>
+        </member>
+        <member name="M:DarkRift.ConnectionService.SendBytes(System.Byte[])">
+            <summary>
+            	Sends a series of bytes across the network.
+            </summary>
+            <returns><c>true</c>, Bytes sent sucessfully. <c>false</c> Bytes couldn't be sent.</returns>
+            <param name="bytes">The bytes to be sent.</param>
+        </member>
+        <member name="M:DarkRift.ConnectionService.SendNetworkMessage(DarkRift.NetworkMessage)">
+            <summary>
+            	Encodes and transmits a network message across this connection.
+            </summary>
+            <returns><c>true</c>, if network message was sent, <c>false</c> otherwise.</returns>
+            <param name="message">Message.</param>
+        </member>
+        <member name="M:DarkRift.ConnectionService.SendReply(System.Byte,System.UInt16,System.Object)">
+            <summary>
+            	Sends a reply as the server.
+            </summary>
+            <returns><c>true</c>, if reply was sent, <c>false</c> otherwise.</returns>
+            <param name="tag">The message tag.</param>
+            <param name="subject">The message subject.</param>
+            <param name="data">The data.</param>
+        </member>
+        <member name="M:DarkRift.ConnectionService.Close">
+            <summary>
+            	Close this connection and informs the client.
+            </summary>
+        </member>
+        <member name="M:DarkRift.ConnectionService.Close(System.Boolean,System.Boolean,System.Exception)">
+            <summary>
+                Closes this connection and can inform the client.
+            </summary>
+            <param name="inform"></param>
+            <param name="e">The exception that triggered this if there was one.</param>
+        </member>
+        <member name="M:DarkRift.ConnectionService.SetData(System.String,System.String,System.Object)">
+            <summary>
+            	Sets a player data item on this connection.
+            </summary>
+            <param name="pluginName">The plugin's name.</param>
+            <param name="fieldName">The field name.</param>
+            <param name="data">The data.</param>
+        </member>
+        <member name="M:DarkRift.ConnectionService.GetData(System.String,System.String)">
+            <summary>
+            	Get a player data item on this connection.
+            </summary>
+            <returns>The data.</returns>
+            <param name="pluginName">The plugin's name.</param>
+            <param name="fieldName">The field name.</param>
+        </member>
+        <member name="M:DarkRift.ConnectionService.HasData(System.String,System.String)">
+            <summary>
+                Does a player data item exist on this connection?
+            </summary>
+            <param name="pluginName"></param>
+            <param name="fieldName"></param>
+            <returns></returns>
+        </member>
+        <member name="E:DarkRift.ConnectionService.onPlayerConnect">
+            <summary>
+            	Occurs when a player connects to the server.
+            </summary>
+            <remarks>
+            	This is called just after the handshake so should be used for sending your initial data.
+            </remarks>
+        </member>
+        <member name="E:DarkRift.ConnectionService.onPostPlayerConnect">
+            <summary>
+                Occurs when a player connects to the server, after they have been added.
+            </summary>
+            <remarks>
+                onPlayerConnect is fired before the player has been added to the list of connections so DarkRiftServer.GetAllConnections will not contain them. onPlayerPostCOnnect is called after they've been added.
+            </remarks>
+        </member>
+        <member name="E:DarkRift.ConnectionService.onData">
+            <summary>
+            	Occurs when data is received.
+            </summary>
+        </member>
+        <member name="E:DarkRift.ConnectionService.onDataDecoded">
+            <summary>
+            	Occurs when data is received and decoded.
+            </summary>
+        </member>
+        <member name="E:DarkRift.ConnectionService.onPlayerDisconnect">
+            <summary>
+            	Occurs when a client disconnects.
+            </summary>
+            <remarks>
+            	You cannot send data here, it's already been disconnected at this point.
+            </remarks>
+        </member>
+        <member name="E:DarkRift.ConnectionService.onServerMessage">
+            <summary>
+            	Occurs when the server is sent a message, with the data decoded.
+            </summary>
+        </member>
+        <member name="E:DarkRift.ConnectionService.onDistribute">
+            <summary>
+            	Occurs when distributing data.
+            </summary>
+            <remarks>There should only ever be one thing connected to this at a time!</remarks>
+            <returns><c>true</c> to overide the server distribution <c>false</c> if you want the server to distribute it.</returns>
+        </member>
+        <member name="P:DarkRift.ConnectionService.id">
+            <summary>
+            	The id of the client that this ConnectionService handles.
+            </summary>
+        </member>
+        <member name="T:DarkRift.Interface">
+            <summary>
+            	A class to pass messages to and from the console and log files (in place for GUI support).
+            </summary>
+        </member>
+        <member name="M:DarkRift.Interface.LogTrace(System.String)">
+            <summary>
+            	Logs a message to the log file only.
+            </summary>
+            <param name="message">The message to log.</param>
+        </member>
+        <member name="M:DarkRift.Interface.LogTrace(System.String,System.String)">
+            <summary>
+            	Logs a message to the log file only.
+            </summary>
+            <param name="message">The message to log.</param>
+            <param name="prefix">The prefix to attach.</param>
+        </member>
+        <member name="M:DarkRift.Interface.Log(System.String)">
+            <summary>
+            	Logs a message to the console.
+            </summary>
+            <param name="message">The message to log.</param>
+        </member>
+        <member name="M:DarkRift.Interface.LogWarning(System.String)">
+            <summary>
+            	Logs a warning to the console.
+            </summary>
+            <param name="message">The message to log.</param>
+        </member>
+        <member name="M:DarkRift.Interface.LogError(System.String)">
+            <summary>
+            	Logs an error to the console.
+            </summary>
+            <param name="message">The message to log.</param>
+        </member>
+        <member name="M:DarkRift.Interface.LogFatal(System.String)">
+            <summary>
+            	Logs a fatal error to the console.
+            </summary>
+            <param name="message">The message to log.</param>
+        </member>
+        <member name="M:DarkRift.Interface.SetupServerCommands">
+            <summary>
+            	Setups the server commands.
+            </summary>
+        </member>
+        <member name="M:DarkRift.Interface.ExecuteCommand(System.String)">
+            <summary>
+            	Executes the issued command.
+            </summary>
+        </member>
+        <member name="M:DarkRift.Interface.RegisterCommands(DarkRift.Command[])">
+            <summary>
+            	Registers an array of commands to the server.
+            </summary>
+            <param name="commandsToAdd">The commands to add.</param>
+        </member>
+        <member name="T:DarkRift.PluginManager">
+            <summary>
+            	The plugin manager.
+            </summary>
+        </member>
+        <member name="M:DarkRift.PluginManager.CallUpdate(System.Object,System.Timers.ElapsedEventArgs)">
+            <summary>
+                Invokes update on all plugins.
+            </summary>
+            <param name="source"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:DarkRift.PluginManager.LoadPluginsFromFolder">
+            <summary>
+                Loads the plugins from the plugin folder.
+            </summary>
+        </member>
+        <member name="M:DarkRift.PluginManager.InvokeOnPluginsLoaded">
+            <summary>
+                Invokes the plugins loaded event.
+            </summary>
+        </member>
+        <member name="M:DarkRift.PluginManager.SetupUpdate">
+            <summary>
+            	Sets up the update timer.
+            </summary>
+        </member>
+        <member name="M:DarkRift.PluginManager.LoadPlugins(System.Type[])">
+            <summary>
+                Loads the given plugins to the server.
+            </summary>
+            <param name="forceLoadPlugins"></param>
+        </member>
+        <member name="P:DarkRift.PluginManager.plugins">
+            <summary>
+            	A list of plugins which you can access by name to communicate with.
+            </summary>
+            <value>The plugin.</value>
+        </member>
+        <member name="T:DarkRift.Plugin">
+            <summary>
+            	Base class for all server logic plugins.
+            </summary>
+        </member>
+        <member name="T:DarkRift.IPlugin">
+            <summary>
+            	Base class for plugin to allow it to be found.
+            </summary>
+        </member>
+        <member name="P:DarkRift.IPlugin.name">
+            <summary>
+            	The name of the plugin.
+            </summary>
+            <value>The plugin's name.</value>
+        </member>
+        <member name="P:DarkRift.IPlugin.version">
+            <summary>
+            	The version of the plugin.
+            </summary>
+            <value>The plugin's verison</value>
+            <remarks>Must be in dot format (eg: 1.2.10)</remarks>
+        </member>
+        <member name="P:DarkRift.IPlugin.commands">
+            <summary>
+            	A list of commands this plugin uses.
+            </summary>
+            <value>The commands used by this plugin.</value>
+        </member>
+        <member name="P:DarkRift.IPlugin.author">
+            <summary>
+            	The author of the plugin.
+            </summary>
+            <value>The author.</value>
+        </member>
+        <member name="P:DarkRift.IPlugin.supportEmail">
+            <summary>
+            	An email at which users can get support at.
+            </summary>
+            <value>A support email.</value>
+        </member>
+        <member name="M:DarkRift.Plugin.Update">
+            <summary>
+            	Any overriding member will be invoked 100 times per second.
+            </summary>
+        </member>
+        <member name="M:DarkRift.Plugin.IsInstalled">
+            <summary>
+            	Determines whether the plugin is installed.
+            </summary>
+            <returns><c>true</c> if the plugin is installed; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="M:DarkRift.Plugin.InstallSubdirectory(System.Collections.Generic.Dictionary{System.String,System.Byte[]})">
+            <summary>
+            	Creates the plugin's subdirectory and writes the default files to it.
+            </summary>
+            <param name="fileContents">File contents.</param>
+        </member>
+        <member name="M:DarkRift.Plugin.GetSubdirectory">
+            <summary>
+            	Gets the address of the plugin's subdirectory.
+            </summary>
+            <returns>The subdirectory address.</returns>
+        </member>
+        <member name="P:DarkRift.Plugin.name">
+            <summary>
+            	The name of the plugin.
+            </summary>
+            <value>The plugin's name.</value>
+        </member>
+        <member name="P:DarkRift.Plugin.version">
+            <summary>
+            	The version of the plugin.
+            </summary>
+            <value>The plugin's verison</value>
+            <remarks>Must be in dot format (eg: 1.2.10)</remarks>
+        </member>
+        <member name="P:DarkRift.Plugin.commands">
+            <summary>
+            	A list of commands this plugin uses.
+            </summary>
+            <value>The commands used by this plugin.</value>
+        </member>
+        <member name="P:DarkRift.Plugin.author">
+            <summary>
+            	The author of the plugin.
+            </summary>
+            <value>The author.</value>
+        </member>
+        <member name="P:DarkRift.Plugin.supportEmail">
+            <summary>
+            	An email at which users can get support at.
+            </summary>
+            <value>A support email.</value>
+        </member>
+        <member name="T:DarkRift.PerformanceMonitor">
+            <summary>
+            	The performance monitor to record overall performance of the server.
+            </summary>
+        </member>
+        <member name="M:DarkRift.PerformanceMonitor.ResetCounters">
+            <summary>
+            	Resets the counters to 0.
+            </summary>
+            <remarks>
+            	Note if there are other plugins using the performance monitor they may malfunction.
+            </remarks>
+        </member>
+        <member name="M:DarkRift.PerformanceMonitor.LogPerformanceData">
+            <summary>
+            	Logs the performance data to the console.
+            </summary>
+        </member>
+        <member name="P:DarkRift.PerformanceMonitor.totalExecutionCounts">
+            <summary>
+            	Gets the total number of messages that have been processed.
+            </summary>
+            <value>The total number of executions.</value>
+        </member>
+        <member name="P:DarkRift.PerformanceMonitor.totalExecutionTime">
+            <summary>
+            	Gets the total time the server has been processing data.
+            </summary>
+            <value>The total execution time.</value>
+        </member>
+        <member name="P:DarkRift.PerformanceMonitor.totalConnectionReadCounts">
+            <summary>
+            	Gets the total number of connection reads.
+            </summary>
+            <value>The total number of executions.</value>
+        </member>
+        <member name="P:DarkRift.PerformanceMonitor.totalConnectionReadTime">
+            <summary>
+            	Gets the total time the server has been reading data (total time reader the header + total time reading the body).
+            </summary>
+            <value>The total execution time.</value>
+        </member>
+        <member name="P:DarkRift.PerformanceMonitor.totalConnectionHeaderReadCounts">
+            <summary>
+            	Gets the total number of connection reads for the header.
+            </summary>
+            <value>The total number of executions.</value>
+        </member>
+        <member name="P:DarkRift.PerformanceMonitor.totalConnectionHeaderReadTime">
+            <summary>
+            	Gets the total time the server has been reading header data.
+            </summary>
+            <value>The total execution time.</value>
+        </member>
+        <member name="P:DarkRift.PerformanceMonitor.totalConnectionBodyReadCounts">
+            <summary>
+            	Gets the total number of connection reads for the body.
+            </summary>
+            <value>The total number of executions.</value>
+        </member>
+        <member name="P:DarkRift.PerformanceMonitor.totalConnectionBodyReadTime">
+            <summary>
+            	Gets the total time the server has been reading body data.
+            </summary>
+            <value>The total execution time.</value>
+        </member>
+        <member name="P:DarkRift.PerformanceMonitor.averageExecutionTime">
+            <summary>
+            	Gets the average time it takes to process a single message.
+            </summary>
+            <value>The average processing time.</value>
+        </member>
+        <member name="P:DarkRift.PerformanceMonitor.averageConnectionReadTime">
+            <summary>
+            	Gets the average time it takes to read a single message.
+            </summary>
+            <value>The average processing time.</value>
+        </member>
+        <member name="P:DarkRift.PerformanceMonitor.averageConnectionHeaderReadTime">
+            <summary>
+            	Gets the average time it takes to read a single message header.
+            </summary>
+            <value>The average processing time.</value>
+        </member>
+        <member name="P:DarkRift.PerformanceMonitor.averageConnectionBodyReadTime">
+            <summary>
+            	Gets the average time it takes to read a single message body.
+            </summary>
+            <value>The average processing time.</value>
+        </member>
+        <member name="T:DarkRift.NoAvailableIDException">
+            <summary>
+            	Thrown when there are no IDs left to allocate.
+            </summary>
+        </member>
+        <member name="T:DarkRift.Command">
+            <summary>
+                A command that can be entered into DarkRift
+            </summary>
+        </member>
+        <member name="F:DarkRift.Command.name">
+            <summary>
+            	The name of the command.
+            </summary>
+        </member>
+        <member name="F:DarkRift.Command.description">
+            <summary>
+            	The description of the command.
+            </summary>
+        </member>
+        <member name="F:DarkRift.Command.callback">
+            <summary>
+            	The function called when the command is executed.
+            </summary>
+        </member>
+        <member name="M:DarkRift.Command.#ctor(System.String,System.String,System.Action{System.String[]})">
+            <summary>
+            	Initializes a new instance of a <see cref="T:DarkRift.Command"/>.
+            </summary>
+            <param name="name">The name of the command.</param>
+            <param name="description">A description of the command.</param>
+            <param name="callBack">The function to call when the command is called.</param>
+        </member>
+        <member name="T:DarkRift.SystemCommands">
+            <summary>
+            	Class used to provide system command handling.
+            </summary>
+        </member>
+        <member name="M:DarkRift.SystemCommands.ListCommands(System.String[])">
+            <summary>
+            	Lists the commands available to execute.
+            </summary>
+            <param name="parts">Not Used.</param>
+        </member>
+        <member name="M:DarkRift.SystemCommands.Close(System.String[])">
+            <summary>
+            	Close the server saftely.
+            </summary>
+            <param name="parts">Not Used.</param>
+        </member>
+        <member name="M:DarkRift.SystemCommands.Kick(System.String[])">
+            <summary>
+            	Kick the specified player
+            </summary>
+            <param name="parts">Parts from command.</param>
+        </member>
+        <member name="M:DarkRift.SystemCommands.KickAll(System.String[])">
+            <summary>
+            	Kicks all players from the server.
+            </summary>
+            <param name="parts">Not Used.</param>
+        </member>
+        <member name="T:DarkRift.Storage.Database">
+            <summary>
+            	Base class for Database connector plugins
+            </summary>
+        </member>
+        <member name="M:DarkRift.Storage.Database.ExecuteQuery(System.String,DarkRift.Storage.QueryParameter[])">
+            <summary>
+            	Executes a query on the database returning an array of rows.
+            </summary>
+            <returns>The rows of the database selected.</returns>
+            <param name="query">The query.</param>
+            <param name="paramaters">The paramaters to be added to this query.</param>
+        </member>
+        <member name="M:DarkRift.Storage.Database.ExecuteScalar(System.String,DarkRift.Storage.QueryParameter[])">
+            <summary>
+            	Executes a query on the database with a scalar return.
+            </summary>
+            <returns>The object returned from the database.</returns>
+            <param name="query">The query.</param>
+            <param name="paramaters">The paramaters to be added to this query.</param>
+        </member>
+        <member name="M:DarkRift.Storage.Database.ExecuteNonQuery(System.String,DarkRift.Storage.QueryParameter[])">
+             <summary>
+             	Execute the specified query on the database.
+             </summary>
+             <param name="query">The query.</param>
+            <param name="paramaters">The paramaters to be added to this query.</param>
+        </member>
+        <member name="M:DarkRift.Storage.Database.EscapeString(System.String)">
+            <summary>
+            	Removes any characters that could allow SQL injection.
+            </summary>
+            <param name="c">Th string to escape</param>
+            <param name="query">Query.</param>
+        </member>
+        <member name="M:DarkRift.Storage.Database.Dispose">
+            <summary>
+            	Releases all resource used by the <see cref="T:DarkRift.Storage.Database"/> object.
+            </summary>
+            <remarks>Call <see cref="M:DarkRift.Storage.Database.Dispose"/> when you are finished using the <see cref="T:DarkRift.Storage.Database"/>. The
+            <see cref="M:DarkRift.Storage.Database.Dispose"/> method leaves the <see cref="T:DarkRift.Storage.Database"/> in an unusable state. After
+            calling <see cref="M:DarkRift.Storage.Database.Dispose"/>, you must release all references to the <see cref="T:DarkRift.Storage.Database"/> so
+            the garbage collector can reclaim the memory that the <see cref="T:DarkRift.Storage.Database"/> was occupying.</remarks>
+        </member>
+        <member name="M:DarkRift.Storage.Database.IsInstalled">
+            <summary>
+            	Determines whether the plugin is installed.
+            </summary>
+            <returns><c>true</c> if the plugin is installed; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="M:DarkRift.Storage.Database.InstallSubdirectory(System.Collections.Generic.Dictionary{System.String,System.Byte[]})">
+            <summary>
+            	Creates the plugin's subdirectory and writes the default files to it.
+            </summary>
+            <param name="fileContents">File contents.</param>
+        </member>
+        <member name="M:DarkRift.Storage.Database.GetSubdirectory">
+            <summary>
+            	Gets the address of the plugin's subdirectory.
+            </summary>
+            <returns>The subdirectory address.</returns>
+        </member>
+        <member name="P:DarkRift.Storage.Database.name">
+            <summary>
+            	The name of the plugin.
+            </summary>
+            <value>The plugin's name.</value>
+        </member>
+        <member name="P:DarkRift.Storage.Database.version">
+            <summary>
+            	The version of the plugin.
+            </summary>
+            <value>The plugin's verison</value>
+            <remarks>Must be in dot format (eg: 1.2.10)</remarks>
+        </member>
+        <member name="P:DarkRift.Storage.Database.commands">
+            <summary>
+            	A list of commands this plugin uses.
+            </summary>
+            <value>The commands used by this plugin.</value>
+        </member>
+        <member name="P:DarkRift.Storage.Database.author">
+            <summary>
+            	The author of the plugin.
+            </summary>
+            <value>The author.</value>
+        </member>
+        <member name="P:DarkRift.Storage.Database.supportEmail">
+            <summary>
+            	An email at which users can get support at.
+            </summary>
+            <value>A support email.</value>
+        </member>
+        <member name="P:DarkRift.Storage.Database.databaseName">
+            <summary>
+            	Gets the name of the database this plugin operates with.
+            </summary>
+            <value>The name of the database.</value>
+        </member>
+        <member name="T:DarkRift.ConfigTools.ConfigReader">
+            <summary>
+            	A helper tool for importing and reading configs in a similar way to the settings.cnf file
+            </summary>
+        </member>
+        <member name="M:DarkRift.ConfigTools.ConfigReader.#ctor(System.String)">
+            <summary>
+            	Loads a config file for access.
+            </summary>
+            <remarks>
+            	Throws a FileNotFoundException if an invalid path is specified.
+            	Reads from the folder with the executable in. (Use \Plugins).
+            </remarks>
+            <param name="filename">The name of the config file to load.</param>
+        </member>
+        <member name="M:DarkRift.ConfigTools.ConfigReader.Load(System.String)">
+            <summary>
+            	Load the specified filename.
+            </summary>
+            <param name="filename">The filename.</param>
+        </member>
+        <member name="M:DarkRift.ConfigTools.ConfigReader.IsTrue(System.String)">
+            <summary>
+            	Does the specified key have the value "True"?
+            </summary>
+            <returns><c>true</c> if the key is set to true, <c>false</c> otherwise.</returns>
+            <param name="key">The Key.</param>
+        </member>
+        <member name="P:DarkRift.ConfigTools.ConfigReader.loaded">
+            <summary>
+            	True if the reader was able to load the file.
+            </summary>
+        </member>
+        <member name="P:DarkRift.ConfigTools.ConfigReader.Item(System.String)">
+            <summary>
+            	Gets the value of the config option with the specified key.
+            </summary>
+            <param name="key">The Key.</param>
+        </member>
+        <member name="T:DarkRift.Storage.DatabaseRow">
+            <summary>
+                Represents a single return of the result of a database query.
+            </summary>
+        </member>
+        <member name="M:DarkRift.Storage.DatabaseRow.#ctor">
+            <summary>
+                Constructor.
+            </summary>
+        </member>
+        <member name="T:DarkRift.Storage.QueryParameter">
+            <summary>
+            	A key value pair as a paramaeter for a database query.
+            </summary>
+        </member>
+        <member name="F:DarkRift.Storage.QueryParameter.name">
+            <summary>
+            	The name of the parameter.
+            </summary>
+        </member>
+        <member name="F:DarkRift.Storage.QueryParameter.obj">
+            <summary>
+            	The object for the parameter.
+            </summary>
+        </member>
+        <member name="T:DarkRift.DatabaseException">
+            <summary>
+                Represents an error trying to do something on the database
+            </summary>
+        </member>
+        <member name="M:DarkRift.DatabaseException.#ctor">
+            <summary>
+                Constructor.
+            </summary>
+        </member>
+        <member name="M:DarkRift.DatabaseException.#ctor(System.String)">
+            <summary>
+                Constructor with exception message.
+            </summary>
+            <param name="message"></param>
+        </member>
+        <member name="M:DarkRift.DatabaseException.#ctor(System.String,System.Exception)">
+            <summary>
+                Constructor with exception message and the original exception.
+            </summary>
+            <param name="message"></param>
+            <param name="innerException"></param>
+        </member>
+        <member name="M:DarkRift.DarkRiftUtilities.ConvertReaderToWriter(DarkRift.DarkRiftReader)">
+            <summary>
+                Converts a DarkRiftReader to a DarkRiftWriter.
+            </summary>
+            <param name="reader">The reader.</param>
+            <returns>The writer.</returns>
+        </member>
+        <member name="T:DarkRift.Mode">
+            <summary>
+                How the server should run.
+            </summary>
+        </member>
+        <member name="F:DarkRift.Mode.Standalone">
+            <summary>
+                Run in full mode, everything enabled.
+            </summary>
+        </member>
+        <member name="F:DarkRift.Mode.Embedded">
+            <summary>
+                Run as a child to a controller eg. Unity. Disables parts of the plugin system.
+            </summary>
+        </member>
+        <member name="T:DarkRift.StateObject">
+            <summary>
+                Represents the state of the current receive operation for TCP connections.
+            </summary>
+        </member>
+        <member name="F:DarkRift.StateObject.buffer">
+            <summary>
+                The buffer we're receiving.
+            </summary>
+        </member>
+        <member name="F:DarkRift.StateObject.totalBytesReceived">
+            <summary>
+                The total number of bytes received so far.
+            </summary>
+        </member>
+        <member name="F:DarkRift.StateObject.callback">
+            <summary>
+                The callback to invoke once the buffer has been filled.
+            </summary>
+        </member>
+        <member name="M:DarkRift.StateObject.#ctor(System.Int32,System.Action{System.Byte[]})">
+            <summary>
+                Creates a StateObject with the specified length.
+            </summary>
+            <param name="length">The number of bytes expected to be received.</param>
+            <param name="callback">The callback to invoke once data has been received.</param>
+        </member>
+    </members>
+</doc>
