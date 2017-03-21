@@ -1,41 +1,82 @@
 ﻿using UnityEngine;
+using UnityEngine.Events;
 using System.Collections;
 using System.Collections.Generic;
 using DarkRift;
+using VRTK;
 
 public class NetworkObject : MonoBehaviour {
 
-	//The ID of the client that owns this player (so we can check if it's us updating)
-	public int objectID;
+	//The ID of the ObjectGame
+	public ushort ObjectID;
 	public bool DEBUG = true;
 
-	Vector3 lastPosition;
-	Quaternion lastRotation;
+	Vector3 lastPosition = Vector3.zero;
+	Quaternion lastRotation = Quaternion.identity;
 	Vector3 lastScale;
+
+	bool isKinematic = false;
+	Rigidbody rb;
+	VRTK_InteractableObject io;
+
+	void Awake()
+	{
+		io = GetComponent<VRTK_InteractableObject> ();
+		rb = GetComponent<Rigidbody> ();
+	}
 
 	void Start(){
 		//Tell the network to pass data to our RecieveData function so we can process it.
 		DarkRiftAPI.onData += RecieveData;
+
+		if (GetComponent<VRTK_InteractableObject> () == null) {
+			Debug.LogError ("This component requires the VRTK_InteractableObject script attached to the parent.");
+			return;
+		} else {
+			GetComponent<VRTK_InteractableObject>().InteractableObjectGrabbed += new InteractableObjectEventHandler(ObjectGrabbed);
+			GetComponent<VRTK_InteractableObject>().InteractableObjectUngrabbed += new InteractableObjectEventHandler(ObjectUngrabbed);
+		}
 	}
 
 	void Update(){
 		//Only send data if we're connected and we own this player
 		if( DarkRiftAPI.isConnected ){
-			//We're going to use a tag of 1 for movement messages
-			//If we're conencted and have moved send our position with subject 0.
-			if((  Vector3.Distance(lastPosition, transform.position) > 0.05f ) || ( transform.rotation != lastRotation ))
+
+			if((  Vector3.Distance(lastPosition, transform.position) > 0.005f ) || ( transform.rotation != lastRotation ))
 			{
-				SerialisePosRot(transform.position, transform.rotation);
+				SerialisePosRot(transform.position, transform.rotation, ObjectID, isKinematic);
+
+				if (DEBUG) {
+					Debug.Log ("ObjectID: "+ObjectID.ToString());
+					Debug.Log ("DarkRiftID: " + DarkRiftAPI.id.ToString ());
+				}
+
+				//Update stuff
+				lastPosition = transform.position;
+				lastRotation = transform.rotation;
 			}
-			//Update stuff
-			lastPosition = transform.position;
-			lastRotation = transform.rotation;
+		}
+	}
+
+	private void ObjectGrabbed(object sender, InteractableObjectEventArgs e)
+	{
+		if (DEBUG) {
+			Debug.Log ("I'm grabbed!");
+			this.isKinematic = true;
+		}
+	}
+
+	private void ObjectUngrabbed(object sender, InteractableObjectEventArgs e)
+	{
+		if (DEBUG) {
+			Debug.Log ("I'm ungrabbed!");
+			this.isKinematic = false;
 		}
 	}
 
 	void RecieveData(byte tag, ushort subject, object data){
 		//Right then. When data is recieved it will be passed here, 
-		//we then need to process it if it's got a tag of 1 or 2 
+		//we then need to process it if it's got a tag of 3
 		//(the tags for position and rotation), check it's for us 
 		//and update ourself.
 
@@ -47,13 +88,14 @@ public class NetworkObject : MonoBehaviour {
 		if( tag == TagIndexVRTK.ObjectUpdate ){
 
 			//...update our position and rotation
-			if( subject == TagIndexVRTK.ObjectUpdateSubjects.PosRot){
-                DeserialisePosRot (data);
+			if( subject == ObjectID){
+
+				DeserialisePosRot (data);
 			}
 		}
 	}
 		
-	void SerialisePosRot(Vector3 pos, Quaternion rot)
+	void SerialisePosRot(Vector3 pos, Quaternion rot, ushort ID, bool isVarKinematic)
 	{
 		//Here is where we actually serialise things manually. To do this we need to add
 		//any data we want to send to a DarkRiftWriter. and then send this as we would normally.
@@ -62,7 +104,7 @@ public class NetworkObject : MonoBehaviour {
 		using(DarkRiftWriter writer = new DarkRiftWriter())
 		{
 			//Next we write any data to the writer
-			writer.Write(objectID);
+			writer.Write(isVarKinematic);
 			writer.Write(pos.x);
 			writer.Write(pos.y);
 			writer.Write(pos.z);
@@ -71,7 +113,7 @@ public class NetworkObject : MonoBehaviour {
 			writer.Write(rot.z);
 			writer.Write(rot.w);
 
-			DarkRiftAPI.SendMessageToOthers(TagIndexVRTK.ObjectUpdate, TagIndexVRTK.ObjectUpdateSubjects.PosRot, writer);
+			DarkRiftAPI.SendMessageToOthers(TagIndexVRTK.ObjectUpdate, ID, writer);
 			if (DEBUG) {
 				Debug.Log ("Data sent: " + pos.ToString ("F4") + " " + rot.ToString ("F6"));
 			}
@@ -89,19 +131,18 @@ public class NetworkObject : MonoBehaviour {
 			//to use this more than once though.
 			using(DarkRiftReader reader = (DarkRiftReader)data)
 			{
-				//Then read!
-				//Read the ObjectID
-				int id = reader.ReadInt32();
+				//Then read and
+				//update is for this object
 
-				if (DEBUG) {
-					Debug.Log ("Id: "+id.ToString());
-				}
-
-				//The upate is for this object
-				if (id == objectID) {  
-				
 					try
 					{
+
+						rb.isKinematic = reader.ReadBoolean();
+
+						if (DEBUG) {
+							Debug.Log ("isKinematic Readed");
+						}
+						
 						transform.position = new Vector3 (
 							reader.ReadSingle (),
 							reader.ReadSingle (),
@@ -120,6 +161,7 @@ public class NetworkObject : MonoBehaviour {
 						);
 						
 						if (DEBUG) {
+							Debug.Log ("ObjectID: "+ObjectID.ToString());
 							Debug.Log ("Data recieved:" + transform.position.ToString ("F4") + " " + transform.rotation.ToString ("F6"));
 						}
 					}
@@ -127,7 +169,6 @@ public class NetworkObject : MonoBehaviour {
 					{
 						//Probably not aware of them yet!
 					}
-				}
 			}
 		}
 		else

@@ -661,7 +661,7 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 502583062}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7fc65878c7102524bb8c2bcfbefff497, type: 3}
   m_Name: 
@@ -693,7 +693,7 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 502583062}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0ec704cceb26f6f49b6c900fc83d8d18, type: 3}
   m_Name: 
@@ -797,6 +797,7 @@ GameObject:
   - component: {fileID: 550770267}
   - component: {fileID: 550770268}
   - component: {fileID: 550770269}
+  - component: {fileID: 550770270}
   m_Layer: 0
   m_Name: Cube_HighlightOnTouch
   m_TagString: Untagged
@@ -942,6 +943,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 18055ba762aa3994f9c10208cd088bc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &550770270
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 550770261}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bb03d75a095d4e26bf38d0d60bbd056, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObjectID: 1
+  DEBUG: 1
 --- !u!1001 &552241449
 Prefab:
   m_ObjectHideFlags: 0
@@ -1170,7 +1184,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6791f624722394a12b07054379a82e84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  serverIP: 127.0.0.1
+  serverIP: 46.101.163.17
   serverPort: 4296
   playerObject: {fileID: 0}
 --- !u!1 &796158292 stripped
@@ -2163,7 +2177,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8bb03d75a095d4e26bf38d0d60bbd056, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  objectID: 0
+  ObjectID: 0
   DEBUG: 1
 --- !u!1 &1895156694 stripped
 GameObject:
