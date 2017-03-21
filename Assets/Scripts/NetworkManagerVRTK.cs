@@ -27,6 +27,11 @@ public class NetworkManagerVRTK : MonoBehaviour
 		//Enable Background Running
 		Application.runInBackground = true;
 
+		//Enable custom log
+		CustomLogger.LogIt("Start Logging");
+		//Application.dataPath
+		Debug.Log(Application.dataPath);
+
 		//Connect to the DarkRift Server using the Ip specified (will hang until connected or timeout)
 		DarkRiftAPI.Connect (serverIP, serverPort);
 

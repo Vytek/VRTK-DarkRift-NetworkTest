@@ -5,11 +5,13 @@ using System.Collections.Generic;
 using DarkRift;
 using VRTK;
 
+[RequireComponent(typeof(VRTK_InteractableObject))]
 public class NetworkObject : MonoBehaviour {
 
 	//The ID of the ObjectGame
 	public ushort ObjectID;
 	public bool DEBUG = true;
+	public float InterRate = 9;
 
 	Vector3 lastPosition = Vector3.zero;
 	Quaternion lastRotation = Quaternion.identity;
@@ -18,6 +20,7 @@ public class NetworkObject : MonoBehaviour {
 	bool isKinematic = false;
 	Rigidbody rb;
 	VRTK_InteractableObject io;
+
 
 	void Awake()
 	{
@@ -39,12 +42,10 @@ public class NetworkObject : MonoBehaviour {
 	}
 
 	void Update(){
-		//Only send data if we're connected and we own this player
+		//Only send data if we're connected
 		if( DarkRiftAPI.isConnected ){
 
-			if((  Vector3.Distance(lastPosition, transform.position) > 0.005f ) || ( transform.rotation != lastRotation ))
-			{
-				SerialisePosRot(transform.position, transform.rotation, ObjectID, isKinematic);
+				SerialisePosRot(Vector3.Lerp(transform.position, lastPosition, Time.deltaTime * InterRate), Quaternion.Lerp(transform.rotation, lastRotation, Time.deltaTime * InterRate), ObjectID, isKinematic);
 
 				if (DEBUG) {
 					Debug.Log ("ObjectID: "+ObjectID.ToString());
@@ -54,7 +55,6 @@ public class NetworkObject : MonoBehaviour {
 				//Update stuff
 				lastPosition = transform.position;
 				lastRotation = transform.rotation;
-			}
 		}
 	}
 
@@ -62,16 +62,16 @@ public class NetworkObject : MonoBehaviour {
 	{
 		if (DEBUG) {
 			Debug.Log ("I'm grabbed!");
-			this.isKinematic = true;
 		}
+		this.isKinematic = true;
 	}
 
 	private void ObjectUngrabbed(object sender, InteractableObjectEventArgs e)
 	{
 		if (DEBUG) {
 			Debug.Log ("I'm ungrabbed!");
-			this.isKinematic = false;
 		}
+		this.isKinematic = false;
 	}
 
 	void RecieveData(byte tag, ushort subject, object data){
