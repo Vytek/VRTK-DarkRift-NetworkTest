@@ -21,16 +21,16 @@ public class NetworkObject : MonoBehaviour {
 	Rigidbody rb;
 	VRTK_InteractableObject io;
 
-
 	void Awake()
 	{
 		io = GetComponent<VRTK_InteractableObject> ();
 		rb = GetComponent<Rigidbody> ();
 	}
 
-	void Start(){
+	void Start()
+	{
 		//Tell the network to pass data to our RecieveData function so we can process it.
-		DarkRiftAPI.onData += RecieveData;
+		DarkRiftAPI.onDataDetailed += RecieveData;
 
 		if (GetComponent<VRTK_InteractableObject> () == null) {
 			Debug.LogError ("This component requires the VRTK_InteractableObject script attached to the parent.");
@@ -39,22 +39,41 @@ public class NetworkObject : MonoBehaviour {
 			GetComponent<VRTK_InteractableObject>().InteractableObjectGrabbed += new InteractableObjectEventHandler(ObjectGrabbed);
 			GetComponent<VRTK_InteractableObject>().InteractableObjectUngrabbed += new InteractableObjectEventHandler(ObjectUngrabbed);
 		}
+			
+		//Initialize
+		lastPosition = transform.position;
+		lastRotation = transform.rotation;
 	}
 
-	void Update(){
+	void Update()
+	{
 		//Only send data if we're connected
-		if( DarkRiftAPI.isConnected ){
-
-				SerialisePosRot(Vector3.Lerp(transform.position, lastPosition, Time.deltaTime * InterRate), Quaternion.Lerp(transform.rotation, lastRotation, Time.deltaTime * InterRate), ObjectID, isKinematic);
-
+		if( DarkRiftAPI.isConnected )
+		{
+			if ((Vector3.Distance (transform.position, lastPosition) > 0.05) || (Quaternion.Angle (transform.rotation, lastRotation) > 0.3))
+			{
 				if (DEBUG) {
-					Debug.Log ("ObjectID: "+ObjectID.ToString());
-					Debug.Log ("DarkRiftID: " + DarkRiftAPI.id.ToString ());
+					float dist = Vector3.Distance (transform.position, lastPosition);
+					float difa = Quaternion.Angle (transform.rotation, lastRotation);
+					Debug.Log ("Distance: " + dist + " Angle: " + difa);
 				}
 
-				//Update stuff
-				lastPosition = transform.position;
-				lastRotation = transform.rotation;
+				//If is a client object not grabbed ans isKinematic, the owner object grabbed and isKinematic = false
+				if (!rb.isKinematic) 
+				{
+					SerialisePosRot (Vector3.Lerp (transform.position, lastPosition, Time.deltaTime * InterRate), Quaternion.Lerp (transform.rotation, lastRotation, Time.deltaTime * InterRate), ObjectID, isKinematic);
+					//SerialisePosRot (transform.position, transform.rotation, ObjectID, isKinematic);
+
+					if (DEBUG) {
+						Debug.Log ("ObjectID: " + ObjectID.ToString ());
+						Debug.Log ("DarkRiftID: " + DarkRiftAPI.id.ToString ());
+					}
+
+					//Update stuff
+					lastPosition = transform.position;
+					lastRotation = transform.rotation;
+				}
+			}
 		}
 	}
 
@@ -74,7 +93,8 @@ public class NetworkObject : MonoBehaviour {
 		this.isKinematic = false;
 	}
 
-	void RecieveData(byte tag, ushort subject, object data){
+	void RecieveData(ushort senderID, byte tag, ushort subject, object data)
+	{
 		//Right then. When data is recieved it will be passed here, 
 		//we then need to process it if it's got a tag of 3
 		//(the tags for position and rotation), check it's for us 
@@ -136,7 +156,7 @@ public class NetworkObject : MonoBehaviour {
 
 					try
 					{
-
+						//Read boolean to set isKinematic RigidBody
 						rb.isKinematic = reader.ReadBoolean();
 
 						if (DEBUG) {

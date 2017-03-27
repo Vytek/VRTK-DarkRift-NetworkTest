@@ -955,7 +955,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ObjectID: 1
-  DEBUG: 0
+  DEBUG: 1
   InterRate: 9
 --- !u!1001 &552241449
 Prefab:
@@ -1187,7 +1187,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   serverIP: 46.101.163.17
   serverPort: 4296
-  playerObject: {fileID: 0}
+  playerObject: {fileID: 1921121777872888, guid: f3643e93a2a614857923107e8e9b444c,
+    type: 2}
 --- !u!1 &796158292 stripped
 GameObject:
   m_PrefabParentObject: {fileID: 1000013288513084, guid: be540b97364be0a4890e39e62ac89ed1,
@@ -2179,7 +2180,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ObjectID: 0
-  DEBUG: 0
+  DEBUG: 1
   InterRate: 9
 --- !u!1 &1895156694 stripped
 GameObject:
