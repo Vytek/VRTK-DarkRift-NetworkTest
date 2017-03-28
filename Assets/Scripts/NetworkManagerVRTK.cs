@@ -74,6 +74,7 @@ public class NetworkManagerVRTK : MonoBehaviour
 			{
 				//Basically reply to them.
 				DarkRiftAPI.SendMessageToID (senderID, TagIndex.Controller, TagIndex.ControllerSubjects.SpawnPlayer, player.position);
+				Debug.Log("Replay to ID: "+senderID.ToString()+" "+player.position.ToString());
 			}
 
 			//Then if it has a spawn subject we need to spawn a player
@@ -83,8 +84,19 @@ public class NetworkManagerVRTK : MonoBehaviour
 				GameObject clone = (GameObject)Instantiate (playerObject, (Vector3)data, Quaternion.identity);
 				//Tell the network player who owns it so it tunes into the right updates.
 				//clone.GetComponent<PlayerAvatarVR>().ObjectID = senderID;
-				clone.GetComponentInChildren<NetworkPlayerVTRK>().ObjectID = (ushort)(senderID*100);
+				//clone.GetComponentInChildren<NetworkPlayerVTRK>().ObjectID = (ushort)(senderID*100);
+				clone.transform.Find("Head").gameObject.GetComponent<NetworkPlayerVTRK>().ObjectID = (ushort)(senderID*100);
+				clone.transform.Find("RightHand").gameObject.GetComponent<NetworkPlayerVTRK>().ObjectID = (ushort)(senderID*100 + 1);
+				clone.transform.Find("LeftHand").gameObject.GetComponent<NetworkPlayerVTRK>().ObjectID = (ushort)(senderID*100 + 2);
 				//How to ObjectID for Head, RightHand, LeftHand?
+
+				//If it's our player being created allow control and set the reference
+				if (senderID == DarkRiftAPI.id)
+				{
+					player = clone.transform;
+					player.GetComponent<AvatarCameraRigSync> ().enabled = true;
+					Debug.Log("SpawnPlayer ObjectID: "+clone.GetComponentInChildren<NetworkPlayerVTRK>().ObjectID.ToString()+" in position "+data.ToString());
+				}
 			}
 		}
 	}

@@ -955,7 +955,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ObjectID: 1
-  DEBUG: 1
+  DEBUG: 0
   InterRate: 9
 --- !u!1001 &552241449
 Prefab:
@@ -2180,7 +2180,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ObjectID: 0
-  DEBUG: 1
+  DEBUG: 0
   InterRate: 9
 --- !u!1 &1895156694 stripped
 GameObject:
